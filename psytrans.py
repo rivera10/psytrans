@@ -565,7 +565,7 @@ def computerKmers(args, path, outfile, code, mode, computeAll):
             kCountsSum = sum(kCounts)
             for j in xrange(len(kCounts)):
                 kCounts[j] /= kCountsSum
-            for j in kCounts[i]:
+            for j in kCounts:
                 n += 1
                 if j != 0:
                     handle.write(' %d:%.3e' % (n, j))
