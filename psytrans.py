@@ -562,16 +562,19 @@ def computerKmers(args, path, outfile, code, mode, computeAll):
                 kMap = maps[i - kMin]
                 idx  = kMap[word]
                 kCounts[idx] += 1
-            freq = kCounts / kCounts.sum()
-            for f in freq:
+            kCountsSum = sum(kCounts)
+            for j in xrange(len(kCounts)):
+                kCounts[j] /= kCountsSum
+            for j in kCounts[i]:
                 n += 1
-                if f != 0:
-                    handle.write(' %d:%.3e' % (n, f))
+                if j != 0:
+                    handle.write(' %d:%.3e' % (n, j))
         handle.write('\n')
         nSeqs += 1
         # Reset counts
         for i in xrange(kMin, kMax + 1):
-            counts[i].fill(0)
+            for j in xrange(len(counts[i])):
+                counts[i][j] = 0
     # Trace
     logging.info('Processed %d sequences' % nSeqs)
     handle.close()
