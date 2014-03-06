@@ -248,19 +248,17 @@ def writeDatabase(args, options, fastaPath):
     logging.info('Creating Database.')
     hostPath      = args.hostSeq
     symbPath      = args.symbSeq
-    targetpath = open(fastaPath, 'w')
+    targetPath = open(fastaPath, 'w')
     #Writing Host Sequences to target database
     i = 0
     for name, seq in iterFasta(hostPath):
         i += 1
-        name = '>' + HOST_NAME +'_' + str(i)
-        targetpath.write('>%s\n%s\n' % (name, seq))
-    j = 0
+        targetPath.write('>%s_%d\n%s\n' % (HOST_NAME, i, seq))
+    i = 0
     for name, seq in iterFasta(symbPath):
-        j += 1
-        name = '>' + SYMB_NAME +'_' + str(j)
-        targetpath.write('>%s\n%s\n' % (name, seq))
-    targetpath.close()
+        i += 1
+        targetPath.write('>%s_%d\n%s\n' % (SYMB_NAME, i, seq))
+    targetPath.close()
     options.createCheckPoint('writedatabase.done')
 
 def makeDB(args, options):
@@ -379,9 +377,7 @@ def parseBlast(args, options):
             continue
         fields = line.split()
         qName  = fields[0]
-        qName  = ''.join(qName.split('>')[1:])
         hName  = fields[1]
-        hName  = ''.join(hName.split('>')[1:])
         evalue = float(fields[10])
         bitscore = float(fields[11])
         if not qName in querries:
@@ -456,7 +452,7 @@ def classifyFromBlast(querries, args):
     logging.info('Found %d unambiguous hits' % len(trainingClassification))
     logging.info('Found %d host only hits' % hostTrained)
     logging.info('Found %d symbiont only hits' % symbTrained)
-    logging.info('Found %d likely hits' % hostClassified)
+    logging.info('Found %d likely host hits' % hostClassified)
     logging.info('Found %d likely symbiont hits' % symbClassified)
     return trainingClassification, blastClassification
 
@@ -998,7 +994,7 @@ def mainArgs():
                         help='Continue process from last exit stage.')
     args = parser.parse_args()
     if args.minWordSize > args.maxWordSize:
-        sys.stderr.write('[ERROR] Minimum kmer size (-c/--minKmerSize) must be less than Maximum kmer size (-k/--maxKmerSize)\n')
+        logging.error('[ERROR] Minimum kmer size (-c/--minKmerSize) must be less than Maximum kmer size (-k/--maxKmerSize)\n')
         sys.exit(1)
     return args
 
@@ -1067,7 +1063,7 @@ def main():
 
     #Step 5
     if not (restart and options.checkPoint("svm.done")):
-        if checkExecutable('svm-train') and checkExecutable('svm-scale') and checkExecutable('svm-predict'):  ### FIXME look for them only once
+        if checkExecutable('svm-train') and checkExecutable('svm-scale') and checkExecutable('svm-predict'):  ### TODO look for them only once
             doSVMEasy(args, options, kmerTrain, kmerTest)
         else:
             logging.error('[ERROR] Failed to find some of the libsvm commands. Make sure that svm-train, svm-scale and svm-predict are installed.')
@@ -1077,10 +1073,7 @@ def main():
         sys.exit(0)
 
     #Step 6
-    if not restart:
-        blastClassification = blastClassification
-    else:
-        blastClassification = loadBlastClassification(options)
+    blastClassification = loadBlastClassification(options)
 
     predictSVM(args, blastClassification, kmerTrain, kmerTest)
     logging.info("SVM classification completed successfully.")
