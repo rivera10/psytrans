@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
+import array
 import gzip
 import logging
 import os.path
@@ -8,10 +9,8 @@ import subprocess
 import sys
 import shutil
 import os
-import numpy
 import threading
 import traceback
-from math import exp, log, log10
 
 if(sys.hexversion < 0x03000000):
     import Queue
@@ -283,8 +282,8 @@ def makeDB(args, options):
     makeDBCmd = ' '.join(makeDBCmd)
     submakeDB = subprocess.call(makeDBCmd, shell=True)
     if not submakeDB == 0:
-        logging.warning('[ERROR] Please check logfile. Blast Database not created.')
-        sys.exit()
+        logging.error('[ERROR] Please check logfile. Blast Database not created.')
+        sys.exit(1)
     options.createCheckPoint('makeDB.done')
 
 def splitBlastInput(args, options):
@@ -549,13 +548,12 @@ def computerKmers(args, path, outfile, code, mode, computeAll):
     # Initialise counts
     counts  = {}
     for i in xrange(kMin, kMax + 1):
-        counts[i] = numpy.zeros(4 ** i, numpy.double)
+        counts[i] = array.array('d', [0 for x in xrange(4 ** i)])
     # Iterate over sequences
     nSeqs   = 0
     for name, seq in iterFasta(path):
         if length > 0 and nSeqs >= length:
             break
-        #seq   = str(seq.seq).upper()
         size   = len(seq)
         n      = 0
         handle.write('%d' % label)
@@ -1000,7 +998,7 @@ def mainArgs():
                         help='Continue process from last exit stage.')
     args = parser.parse_args()
     if args.minWordSize > args.maxWordSize:
-        sys.stderr.write('Minimum kmer size (-c/--minKmerSize) must be less than Maximum kmer size (-k/--maxKmerSize)\n')
+        sys.stderr.write('[ERROR] Minimum kmer size (-c/--minKmerSize) must be less than Maximum kmer size (-k/--maxKmerSize)\n')
         sys.exit(1)
     return args
 
@@ -1012,7 +1010,7 @@ def main():
     if not (args.hostSeq and args.symbSeq and not args.blastResults) and \
         not (args.blastResults and not (args.hostSeq or args.symbSeq)):
         logging.error('[ERROR] Either provide the host and symbiont sequences OR the output(s) of the blast results')
-        sys.exit()
+        sys.exit(1)
     if args.verboseMode:
         logging.getLogger().setLevel(logging.DEBUG)
     logging.info("Arguments parsed. Starting...")
@@ -1032,17 +1030,17 @@ def main():
                 sys.exit(1)
         if args.stopAfter == 'db':
             logging.info('Stop after "db" requested, exiting now')
-            sys.exit()
+            sys.exit(0)
         #Step 2
         if not (restart and options.checkPoint("runBlast.done")):
             if checkExecutable('blastx'):
                 runBlastThreads(args, options)
             else:
                 logging.error('[ERROR] blastx not found. Exiting')
-                sys.exit(1)
+                sys.exit(0)
         if args.stopAfter == 'runBlast':
             logging.info('Stop after "runBlast" requested, exiting now')
-            sys.exit()
+            sys.exit(0)
     # Start from the user-provied blast results
     elif not os.path.exists(args.blastResults):
         logging.error('[ERROR] Could not find user-provided blast results (%s). Exiting' % args.blastResults)
@@ -1055,7 +1053,7 @@ def main():
         seqSplit(args, options, trainingClassification, blastClassification)
     if args.stopAfter == 'parseBlast':
         logging.info('Stop after "parseBlast" requested, exiting now')
-        return
+        sys.exit(0)
 
     #Step 4
     #Kmer preparation
@@ -1065,7 +1063,7 @@ def main():
         prepareTrainingKmers(args, options, kmerTrain, kmerTest)
     if args.stopAfter == 'kmers':
         logging.info('Stop after "kmers" requested, exiting now')
-        return
+        sys.exit(0)
 
     #Step 5
     if not (restart and options.checkPoint("svm.done")):
@@ -1076,7 +1074,7 @@ def main():
             sys.exit(1)
     if args.stopAfter == 'SVM':
         logging.info('Stop after "SVM" requested, exiting now')
-        return
+        sys.exit(0)
 
     #Step 6
     if not restart:
