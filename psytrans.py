@@ -477,7 +477,7 @@ def seqSplit(args, options, trainingClassification, blastClassification):
     symbTest  = open(options.getSymbTestPath(), 'w')
     blastSort = open(options.getBlastSortPath(), 'w')
     for name, seq in iterFasta(args.queries):
-        identity = identity = (name.split(' ')[0])[1:]
+        identity = name.split()[0]
         seqClass = trainingClassification.get(identity, 0)
         if seqClass == HOST_CODE:
             if m % 2 == 0:
@@ -857,7 +857,7 @@ def writeOutput(args, predictions, blastClassification, fastaPath, fastaName, pr
     symbHandle  = open(symbResults, "w")
     j           = 0
     for name, seq in iterFasta(fastaPath):
-        name      = (name.split(' ')[0])[1:]
+        name      = name.split()[0]
         blastCode = blastDict.get(name, 0)
         if predictions[j] == blastCode:
             if predictions[j] == hCode:
