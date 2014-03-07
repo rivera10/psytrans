@@ -61,8 +61,8 @@ LETTERS = ('A', 'T', 'G', 'C')
 ####################################################################
 
 class PsyTransOptions:
-    """This class consists of attributes to allow database and file paths to be obtained conveniently.
-    Attributes are referred from args, and written to write filenames, filepaths, naming conventions."""
+    """This class consists of attributes to allow database and file paths to be
+    obtained conveniently and consistently."""
 
     def __init__(self, args):
         self.args              = args
@@ -84,19 +84,19 @@ class PsyTransOptions:
 
 
     def getDbPath(self):
-        """returns the file path to the blast database"""
+        """Return the path to the blast database"""
         if not self.dbPath:
             self.dbPath = os.path.join(self.args.tempDir, DB_NAME)
         return self.dbPath
 
     def getFastaDbPath(self):
-        """returns the fasta file path of the blast database"""
+        """Return the path of the fasta file for the blast database"""
         if not self.fastaDbPath:
             self.fastaDbPath = os.path.join(self.args.tempDir, DB_FASTA)
         return self.fastaDbPath
 
     def getChunkList(self):
-        """To obtain the list of fasta chunk paths"""
+        """Return the list of path to the fasta chunks"""
         if not self.chunkList:
             blastInput  = self.args.queries
             fastaPrefix = os.path.basename(blastInput)
@@ -107,7 +107,7 @@ class PsyTransOptions:
         return self.chunkList
 
     def getThreadBlastList(self):
-        """To obtain the list of threaded blast output paths"""
+        """Return the list of output paths of the multi threaded blast"""
         if not self.threadBlastList:
             for i in xrange(self.args.nbThreads):
                 blastThreadFile = '%s.%06d' % (BLAST_FILE, i)
@@ -116,7 +116,7 @@ class PsyTransOptions:
         return self.threadBlastList
 
     def getBlastResultsPath(self):
-        """To obtain the path to the Blast results"""
+        """Return the path to the blast results"""
         if self.args.blastResults:
             return self.args.blastResults
         if not self.blastResultsPath:
@@ -124,22 +124,21 @@ class PsyTransOptions:
         return self.blastResultsPath
 
     def getCheckPointPath(self, dFile):
-        """to obtain the path for the chekpoint (.done) file"""
+        """Return the path for the chekpoint (.done) file"""
         return os.path.join(self.args.tempDir, dFile)
 
     def createCheckPoint(self, cpFile):
-        """to create the checkpoint file in the temporary directory, for continuation of the script
-        when the option -R is being enabled"""
+        """Create the checkpoint file"""
         path = self.getCheckPointPath(cpFile)
         open(path, 'w').close()
 
     def checkPoint(self, dFile):
-        """ to check if a particular checkpoint has been created"""
+        """Check if a particular checkpoint has been created"""
         path = self.getCheckPointPath(dFile)
         return os.path.exists(path)
 
     def _getNumberOfSequences(self):
-        """ obtain the length description of the kmer file name"""
+        """Return the length part of the kmer file name"""
         if self.args.numberOfSeq == 0:
             length = 'all'
         else:
@@ -147,7 +146,7 @@ class PsyTransOptions:
         return str(length)
 
     def _getSuffix(self):
-        """Creates the suffix of the SVM input files"""
+        """Create the suffix of the SVM input files"""
         if not self.suffix:
             suffix = self._getNumberOfSequences()
             self.mink = str(self.args.minWordSize)
@@ -155,52 +154,52 @@ class PsyTransOptions:
             self.suffix = suffix + '_c' + self.mink + '_k' + self.maxk
         return self.suffix
 
-    def getTrainFile(self):
-        """writing the filename and type of the kmer training file as an input for the SVM process"""
+    def getTrainPath(self):
+        """Return the path of the SVM training file"""
         if not self.trainFile:
             fName = self._getSuffix()
             self.trainFile = 'Training' + '_' + fName + '.txt'
-        return str(self.trainFile)
+        return self.trainFile
 
-    def getTestFile(self):
-        """writing the filename and type of the kmer testing file as an input for the SVM process"""
+    def getTestPath(self):
+        """Return the path of the SVM testing file"""
         if not self.testFile:
             fName = self._getSuffix()
             self.testFile = 'Testing' + '_' + fName + '.txt'
         return str(self.testFile)
 
     def getHostTrainPath(self):
-        """get training path of host sequences"""
+        """Return the path of the host training sequences"""
         if not self.hostTrainPath:
             self.hostTrainPath = os.path.join(self.args.tempDir, HOST_TRAINING)
         return self.hostTrainPath
 
     def getHostTestPath(self):
-        """get testing path of host sequences"""
+        """Return the path of the host testing sequences"""
         if not self.hostTestPath:
             self.hostTestPath = os.path.join(self.args.tempDir, HOST_TESTING)
         return self.hostTestPath
 
     def getSymbTrainPath(self):
-        """get training path of host sequences"""
+        """Return the path of the symbiont training sequences"""
         if not self.symbTrainPath:
             self.symbTrainPath = os.path.join(self.args.tempDir, SYMB_TRAINING)
         return self.symbTrainPath
 
     def getSymbTestPath(self):
-        """get testing path of host sequences"""
+        """Return the path of the symbiont testing sequences"""
         if not self.symbTestPath:
             self.symbTestPath = os.path.join(self.args.tempDir, SYMB_TESTING)
         return self.symbTestPath
 
     def getBlastSortPath(self):
-        """get testing path of host sequences"""
+        """Get the path of the sequences sorted using blast"""
         if not self.blastSortPath:
             self.blastSortPath = os.path.join(self.args.tempDir, BLAST_SORT)
         return self.blastSortPath
 
     def getSVMOutPath(self):
-        """get svm output path"""
+        """Get the SVM output path"""
         if not self.SVMOutPath:
             fName = self._getSuffix()
             self.SVMOutPath = fName + '.out'
@@ -215,6 +214,7 @@ class PsyTransOptions:
 
 def iterFasta(path):
     """Iterates over the sequences of a fasta file"""
+
     logging.info("Loading fasta files from %s" % path)
     name = None
     seq = []
@@ -229,7 +229,7 @@ def iterFasta(path):
         if line.startswith(">"):
             if name:
                 yield (name, ''.join(seq))
-            name = line
+            name = line[1:]
             seq = []
         else:
             seq.append(line)
@@ -244,7 +244,8 @@ def iterFasta(path):
 #####################################
 
 def writeDatabase(args, options, fastaPath):
-    """writes multiple sources to a fasta file. This function also calls iterFasta() in the process."""
+    """Write Host and Symbiont sequences with standardised names to a new fasta file"""
+
     logging.info('Creating Database.')
     hostPath      = args.hostSeq
     symbPath      = args.symbSeq
@@ -262,8 +263,8 @@ def writeDatabase(args, options, fastaPath):
     options.createCheckPoint('writedatabase.done')
 
 def makeDB(args, options):
-    """calls the makeblastdb process from the command line via subprocess module.
-    The database files by default will be created and stored at the temporary folder."""
+    """Build the blast database in the temporary folder"""
+
     dbPath    = options.getDbPath()
     fastaPath = options.getFastaDbPath()
     logPath   = dbPath + '.log'
@@ -280,12 +281,13 @@ def makeDB(args, options):
     makeDBCmd = ' '.join(makeDBCmd)
     submakeDB = subprocess.call(makeDBCmd, shell=True)
     if not submakeDB == 0:
-        logging.error('[ERROR] Please check logfile. Blast Database not created.')
+        logging.error('[ERROR] Failed to create blast database')
         sys.exit(1)
     options.createCheckPoint('makeDB.done')
 
 def splitBlastInput(args, options):
-    """To split the input .fasta file into chunks for parallel BLAST search"""
+    """Split the input fasta file into chunks for parallel blast searches"""
+
     logging.info('Splitting sequences into %d chunks' % args.nbThreads)
     chunkList = options.getChunkList()
     handles   = []
@@ -301,33 +303,35 @@ def splitBlastInput(args, options):
         handles[i].close()
 
 def runBlast(args, options, threadId):
-    """calls the blastx process from the command line via subprocess module.
-    Result obtained from the BLAST search. The output format of the result by
-    default is set to '6' (tab-seaparated without comments)."""
+    """Invoke the blast command. The output format of the result by default is
+    set to '6' (tab-seaparated without comments)."""
+
     #Define BLAST variables
     logging.info('Performing Blast search with thread %d' % threadId)
     eVal         = '%.2e' % args.maxBestEvalue
     dbPath       = options.getDbPath()
     blastOutput  = options.getThreadBlastList()[threadId]
-    blastCmd = ['blastx',
-                '-evalue',
-                eVal,
-                '-query',
-                options.getChunkList()[threadId],
-                '-db',
-                dbPath,
-                '-outfmt 6',
-                '-out',
-                blastOutput]
-    blastCmd = ' '.join(blastCmd)
-    retCode  = subprocess.call(blastCmd, shell=True)
+    blastCmd     = ['blastx',
+                    '-evalue',
+                    eVal,
+                    '-query',
+                    options.getChunkList()[threadId],
+                    '-db',
+                    dbPath,
+                    '-outfmt 6',
+                    '-out',
+                    blastOutput]
+    blastCmd     = ' '.join(blastCmd)
+    retCode      = subprocess.call(blastCmd, shell=True)
     if not retCode == 0:
-        logging.error('[ERROR] Please check blastlogfile. Blast search not executed or exit with an error.')
+        logging.error('[ERROR] Failed to excecute blast command')
         sys.exit(1)
 
 def mergeBlastOutput(args, options):
+    """Merge the output from the blast searches"""
+
+    logging.info('Merging Blast results')
     blastOut       = options.getBlastResultsPath()
-    logging.info('Merging Blast results into: %s ' % blastOut)
     blastOutHandle = open(blastOut, 'w')
     for i in xrange(args.nbThreads):
         threadPath   = options.getThreadBlastList()[i]
@@ -338,6 +342,8 @@ def mergeBlastOutput(args, options):
     blastOutHandle.close()
 
 def runBlastThreads(args, options):
+    """Split the queries into chunks, run blast and merge the results"""
+
     logging.info('Launching threaded Blast search')
     splitBlastInput(args, options)
     threads = []
@@ -352,9 +358,10 @@ def runBlastThreads(args, options):
 
 
 def parseBlast(args, options):
-    """parses the blast result given or previously obtained, to later be used to prepare training and testing set of
-    unambiguous sequences. This function returns an object called [querries] which summarises the blast results."""
-    logging.info('Parsing Blast results')
+    """Parse the blast results to be used later to prepare training and testing
+    set with unambiguously classified sequences"""
+
+    logging.info('Parsing blast results')
     if not args.blastResults:
         path = options.getBlastResultsPath()
         if path.endswith('.gz'):
@@ -391,10 +398,8 @@ def parseBlast(args, options):
     return querries
 
 def classifyFromBlast(querries, args):
-    """classifies the entries in the list [querries] into ambiguous and unambiguous sequences.
-    the measurement criteria used here is just the eValue obtaiend from the BLAST results at the moment.
-    The function returns a dictionary [classification], with a complete categorisation of ambiguous sequences
-    as well as unambiguous (host or symbiont) sequences. This function calls parseBlast() in the process."""
+    """Classify blast results into ambiguous and unambiguous sequences from
+    host and symbiont"""
 
     def sortHits(h1, h2):
         if h1[1] > h2[1]:
@@ -458,10 +463,10 @@ def classifyFromBlast(querries, args):
 
 
 def seqSplit(args, options, trainingClassification, blastClassification):
-    """writes the relevant unambiguous sequences into 4 fasta files: training.fasta for host sequences,
-    testing.fasta for host sequences, training.fasta for symb sequences and testing.fasta for symb sequences.
-    The size/ratio of the training to testing set can be modified by the user from the script option
-    (--trainingTestingRatio)."""
+    """Write the unambiguously classified sequences into four fasta files:
+    training.fasta for host sequences, testing.fasta for host sequences,
+    training.fasta for symb sequences and testing.fasta for symb sequences."""
+
     logging.info('Splitting training and testing sequences')
     m = 0
     j = 0
@@ -505,7 +510,8 @@ def seqSplit(args, options, trainingClassification, blastClassification):
 ############################
 
 def prepareMaps(k, maxk, kmers):
-    """prepares the kmer maps for the specified kmer range."""
+    """Prepares the kmer maps for the specified kmer range"""
+
     if k == maxk:
         n        = 0
         kmer2int = {}
@@ -522,8 +528,10 @@ def prepareMaps(k, maxk, kmers):
 
 
 def computerKmers(args, path, outfile, code, mode, computeAll):
-    """computes the kmer counts throughout the kmer range for each sequence, and write the output to a .txt file.
-    Each kmer counts will be scaled accordingly with the sequence size. This function calls prepareMaps() in the process."""
+    """Compute the kmer counts throughout the kmer range for each sequence, and
+    write the output to a file.  Each kmer counts will be scaled accordingly
+    with the sequence size."""
+
     logging.info('Computing kmers for %s' % path)
     label = int(code)
     if computeAll:
@@ -580,15 +588,15 @@ def computerKmers(args, path, outfile, code, mode, computeAll):
     handle.close()
 
 def prepareTrainingKmers(args, options, kmerTrain, kmerTest):
+    """Compute the kmer counts for the training and testing sequences.  The
+    function outputs two files: a training file and a testing file to be used
+    as inputs for the SVM training."""
+
     logging.info('Preparing kmers for training')
-    """computes the kmer counts for each of the training and testing sequences.
-    The function outputs two files:
-    a training file and a testing file to be used as inputs for the SVM training."""
-    logging.info('Computing kmer counts')
-    hostTrainpath = options.getHostTrainPath()
-    hostTestpath  = options.getHostTestPath()
-    symbTrainpath = options.getSymbTrainPath()
-    symbTestpath  = options.getSymbTestPath()
+    hostTrainPath = options.getHostTrainPath()
+    hostTestPath  = options.getHostTestPath()
+    symbTrainPath = options.getSymbTrainPath()
+    symbTestPath  = options.getSymbTestPath()
     computerKmers(args, hostTrainpath, kmerTrain, HOST_CODE, "w", False)
     computerKmers(args, hostTestpath, kmerTest, HOST_CODE, "w", False)
     computerKmers(args, symbTrainpath, kmerTrain, SYMB_CODE, "a", False)
@@ -602,6 +610,9 @@ def prepareTrainingKmers(args, options, kmerTrain, kmerTest):
 ##################################################################
 
 def doSVMEasy(args, options, kmerTrain, kmerTest):
+    """Scale the input, optimise the SVM parameters and test the predictions.
+    the This is roughly the equivalent of the svm-easy script from libsvm."""
+
     logging.info('Starting SVM training')
     kmerTrain       = os.path.join(args.tempDir, kmerTrain)
     kmerTest        = os.path.join(args.tempDir, kmerTest)
@@ -649,7 +660,7 @@ def doSVMEasy(args, options, kmerTrain, kmerTest):
     options.createCheckPoint('svm.done')
 
 def calculateSVMGridJobs():
-    """Calculates the coordinates of the search space"""
+    """Calculate the coordinates of the search space"""
 
     def rangeF(begin, end, step):
         seq = []
@@ -703,11 +714,12 @@ def calculateSVMGridJobs():
             jobs.append(line)
     return jobs
 
-# used to notify the worker to stop
 class SVMGridWorkerStopToken:
-        pass
+    """Notify the worker to stop"""
+    pass
 
 class SVMGridWorker(threading.Thread):
+    """Worker thread that calls successive svm-train commands"""
 
     def __init__(self, name, jobQueue, resultQueue, dataPath):
         threading.Thread.__init__(self)
@@ -717,6 +729,8 @@ class SVMGridWorker(threading.Thread):
         self.dataPath    = dataPath
 
     def run(self):
+        """Call svm-train jobs until all the grid coordinates have been explored"""
+
         while True:
             (c, g) = self.jobQueue.get()
             if c is SVMGridWorkerStopToken:
@@ -740,6 +754,8 @@ class SVMGridWorker(threading.Thread):
                 self.resultQueue.put((self.name, c, g, rate))
 
     def runeOne(self, c, g):
+        """Call a single svm-train job"""
+
         svmTrain = checkExecutable('svm-train')
         cmd      = [svmTrain,
                     '-c',
@@ -757,7 +773,9 @@ class SVMGridWorker(threading.Thread):
                 return float(line.split()[-1][:-1])
 
 def doSVMGrid(args, options, dataPath):
-    # put jobs in queue
+    """Search a parameter grid to optimise the SVM parameters.  This is roughly
+    equivalent to the svm-grid script from libsvm."""
+
     logging.info('Optimising SVM parameters')
     jobs        = calculateSVMGridJobs()
     jobQueue    = Queue.Queue(0)
@@ -767,7 +785,6 @@ def doSVMGrid(args, options, dataPath):
             jobQueue.put((c, g))
     jobQueue._put = jobQueue.queue.appendleft
 
-    # fire local workers
     for i in xrange(args.nbThreads):
         worker = SVMGridWorker('Worker%03d' % i, jobQueue, resultQueue, dataPath)
         worker.start()
@@ -776,8 +793,10 @@ def doSVMGrid(args, options, dataPath):
     svmOutPath = options.getSVMOutPath()
     resultFile = open(svmOutPath, 'w')
     bestRate   = -1
-    bestC1     = None
-    bestG1     = None
+    bestC1     = 0
+    bestG1     = 0
+    bestC      = 1
+    bestG      = 1
 
     for line in jobs:
         for (c, g) in line:
@@ -825,6 +844,8 @@ def loadBlastClassification(options):
     return classification
 
 def writeOutput(args, predictions, blastClassification, fastaPath, fastaName, prefix1, prefix2):
+    """Write the final results"""
+
     logging.info('Writing final output files')
     size        = len(predictions)
     hCode       = str(HOST_CODE)
@@ -861,6 +882,8 @@ def writeOutput(args, predictions, blastClassification, fastaPath, fastaName, pr
     symbHandle.close()
 
 def predictSVM(args, blastClassification, kmerTrain, kmerTest):
+    """Final SVM predictions and combination with the blast results"""
+
     logging.info('Predicting with SVM optimal parameters')
     svmPredict = checkExecutable('svm-predict')
     svmScale   = checkExecutable('svm-scale')
@@ -901,14 +924,16 @@ def predictSVM(args, blastClassification, kmerTrain, kmerTest):
     writeOutput(args, predictions, blastClassification, fastaPath, fastaName, HOST_NAME, SYMB_NAME)
 
 def tempPathCheck(args):
-    """Checks if the temporary folder exists, else creates it."""
+    """Check if the temporary folder exists, else creates it"""
+
     logging.info('Checking for temporary folder')
     tempFolder = os.path.abspath(args.tempDir)
     if not os.path.isdir(tempFolder):
         os.makedirs(tempFolder)
 
 def checkExecutable(program):
-    """Checks whether the program is installed and executable."""
+    """Check whether a program is installed and executable"""
+
     # First check in $PATH
     path = os.getenv('PATH')
     for d in path.split(os.path.pathsep):
@@ -923,7 +948,9 @@ def checkExecutable(program):
 
 
 def mainArgs():
-    parser = argparse.ArgumentParser(description='Performs SVM CLassification of Host-Symbiont Sequences')
+    """Process command-line arguments"""
+
+    parser = argparse.ArgumentParser(description='Perform SVM Classification of Host and Symbiont (or Parasite) Sequences')
     parser.add_argument('queries',
                         help='The input queries sequences')
     #subparsers = parser.add_subparsers(help='Choose between option_1 or option_2 input format')
@@ -1002,6 +1029,8 @@ def mainArgs():
     return args
 
 def main():
+    """Banzai !!!"""
+
     logging.basicConfig(level=logging.INFO, format=("%(asctime)s - %(funcName)s - %(message)s"))
     args    = mainArgs()
     options = PsyTransOptions(args)
@@ -1056,8 +1085,8 @@ def main():
 
     #Step 4
     #Kmer preparation
-    kmerTrain = options.getTrainFile()
-    kmerTest  = options.getTestFile()
+    kmerTrain = options.getTrainPath()
+    kmerTest  = options.getTestPath()
     if not (restart and options.checkPoint("kmers.done")):
         prepareTrainingKmers(args, options, kmerTrain, kmerTest)
     if args.stopAfter == 'kmers':
