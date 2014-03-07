@@ -597,10 +597,10 @@ def prepareTrainingKmers(args, options, kmerTrain, kmerTest):
     hostTestPath  = options.getHostTestPath()
     symbTrainPath = options.getSymbTrainPath()
     symbTestPath  = options.getSymbTestPath()
-    computerKmers(args, hostTrainpath, kmerTrain, HOST_CODE, "w", False)
-    computerKmers(args, hostTestpath, kmerTest, HOST_CODE, "w", False)
-    computerKmers(args, symbTrainpath, kmerTrain, SYMB_CODE, "a", False)
-    computerKmers(args, symbTestpath, kmerTest, SYMB_CODE, "a", False)
+    computerKmers(args, hostTrainPath, kmerTrain, HOST_CODE, "w", False)
+    computerKmers(args, hostTestPath, kmerTest, HOST_CODE, "w", False)
+    computerKmers(args, symbTrainPath, kmerTrain, SYMB_CODE, "a", False)
+    computerKmers(args, symbTestPath, kmerTest, SYMB_CODE, "a", False)
     options.createCheckPoint('kmers.done')
 
 ##################################################################
