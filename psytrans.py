@@ -265,21 +265,22 @@ def writeDatabase(args, options, fastaPath):
 def makeDB(args, options):
     """Build the blast database in the temporary folder"""
 
-    dbPath    = options.getDbPath()
-    fastaPath = options.getFastaDbPath()
-    logPath   = dbPath + '.log'
-    makeDBCmd = ['makeblastdb',
-                 '-title',
-                 DB_NAME,
-                 '-in',
-                 fastaPath,
-                 '-dbtype prot', ### TODO enable tblastx in the future
-                 '-out ',
-                 dbPath,
-                 '-logfile',
-                 logPath]
-    makeDBCmd = ' '.join(makeDBCmd)
-    submakeDB = subprocess.call(makeDBCmd, shell=True)
+    dbPath      = options.getDbPath()
+    fastaPath   = options.getFastaDbPath()
+    logPath     = dbPath + '.log'
+    makeblastdb = checkExecutable('makeblastdb')
+    makeDBCmd   = [makeblastdb,
+                   '-title',
+                   DB_NAME,
+                   '-in',
+                   fastaPath,
+                   '-dbtype prot', ### TODO enable tblastx in the future
+                   '-out ',
+                   dbPath,
+                   '-logfile',
+                   logPath]
+    makeDBCmd   = ' '.join(makeDBCmd)
+    submakeDB   = subprocess.call(makeDBCmd, shell=True)
     if not submakeDB == 0:
         logging.error('[ERROR] Failed to create blast database')
         sys.exit(1)
@@ -311,7 +312,8 @@ def runBlast(args, options, threadId):
     eVal         = '%.2e' % args.maxBestEvalue
     dbPath       = options.getDbPath()
     blastOutput  = options.getThreadBlastList()[threadId]
-    blastCmd     = ['blastx',
+    blastx       = checkExecutable('blastx')
+    blastCmd     = [blastx,
                     '-evalue',
                     eVal,
                     '-query',
