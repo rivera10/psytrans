@@ -24,6 +24,8 @@ else:
 #######################
 #######################
 
+PSYTRANS_VERSION = '0.1.0'
+
 HOST_NAME  = 'host'
 SYMB_NAME  = 'symb'
 DB_NAME    = 'HostSymbDB'
@@ -1024,6 +1026,10 @@ def mainArgs():
                         '--restart',
                         action='store_true',
                         help='Continue process from last exit stage.')
+    parser.add_argument('-V',
+                        '--version',
+                        action='version',
+                        version='%(prog)s ' + PSYTRANS_VERSION)
     args = parser.parse_args()
     if args.minWordSize > args.maxWordSize:
         logging.error('[ERROR] Minimum kmer size (-c/--minKmerSize) must be less than Maximum kmer size (-k/--maxKmerSize)\n')
