@@ -24,7 +24,7 @@ else:
 #######################
 #######################
 
-PSYTRANS_VERSION = '0.1.0'
+PSYTRANS_VERSION = '0.1.1'
 
 HOST_NAME  = 'host'
 SYMB_NAME  = 'symb'
