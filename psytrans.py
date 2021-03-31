@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
-### TODO Big code refactoring: remove any reference to corals and zoox and symb and host, just replace with species1, species2
+# Script was modified from original (https://github.com/sylvainforet/psytrans) to use python3
+
+#Copyright © 2014 Sylvain Forêt & Jue-Sheng Ong.
+#psytrans  is a free  software and comes with ABSOLUTELY NO WARRANTY.  You are welcome to redistribute it under the terms of the GNU General Public License
 
 import argparse
 import array
@@ -30,7 +33,7 @@ else:
 ########################
 ########################
 
-PSYTRANS_VERSION = '1.0.0'
+PSYTRANS_VERSION = '2.0.0'
 
 HOST_NAME     = 'species1'
 SYMB_NAME     = 'species2'
@@ -71,7 +74,7 @@ BINARIES_DIR  = 'binaries'
 
 LETTERS = ('A', 'T', 'G', 'C')
 
-COMPLEMENT_TABLE = string.maketrans('ATGCatgc', 'TACGtacg')
+COMPLEMENT_TABLE = str.maketrans('ATGCatgc', 'TACGtacg')
 
 ####################################################################
 ####################################################################
@@ -127,7 +130,7 @@ class PsyTransOptions:
         if not self.chunkList:
             blastInput  = self.args.queries
             fastaPrefix = os.path.basename(blastInput)
-            for i in xrange(self.args.nbThreads):
+            for i in range(self.args.nbThreads):
                 fastaChunkName = '%s_chunk_%06d' % (fastaPrefix, i)
                 fastaChunkName = os.path.join(self.tempDir, fastaChunkName)
                 self.chunkList.append(fastaChunkName)
@@ -136,7 +139,7 @@ class PsyTransOptions:
     def getThreadBlastList(self):
         """Return the list of output paths of the multi threaded blast"""
         if not self.threadBlastList:
-            for i in xrange(self.args.nbThreads):
+            for i in range(self.args.nbThreads):
                 blastThreadFile = '%s.%06d' % (BLAST_FILE, i)
                 blastThreadPath = os.path.join(self.tempDir, blastThreadFile)
                 self.threadBlastList.append(blastThreadPath)
@@ -278,7 +281,7 @@ def seqCount(path):
     else:
         handle = open(path)
     for line in handle:
-        if line.startswith(">"): 
+        if line.startswith(">"):
             c += 1
     return c
 
@@ -343,7 +346,7 @@ def splitBlastInput(options):
     logging.info('Splitting sequences into %d chunks' % options.args.nbThreads)
     chunkList = options.getChunkList()
     handles   = []
-    for i in xrange(options.args.nbThreads):
+    for i in range(options.args.nbThreads):
         handle = open(chunkList[i], "w")
         handles.append(handle)
     #writing to each chunk .fasta
@@ -351,7 +354,7 @@ def splitBlastInput(options):
     for name, seq in iterFasta(options.args.queries):
         handles[i % options.args.nbThreads].write('>%s\n%s\n' % (name, seq))
         i += 1
-    for i in xrange(options.args.nbThreads):
+    for i in range(options.args.nbThreads):
         handles[i].close()
 
 def runBlast(options, threadId):
@@ -386,7 +389,7 @@ def mergeBlastOutput(options):
     logging.info('Merging Blast results')
     blastOut       = options.getBlastResultsPath()
     blastOutHandle = open(blastOut, "w")
-    for i in xrange(options.args.nbThreads):
+    for i in range(options.args.nbThreads):
         threadPath   = options.getThreadBlastList()[i]
         threadHandle = open(threadPath)
         for line in threadHandle:
@@ -400,11 +403,11 @@ def runBlastThreads(options):
     logging.info('Launching threaded Blast search')
     splitBlastInput(options)
     threads = []
-    for i in xrange(options.args.nbThreads):
+    for i in range(options.args.nbThreads):
         t = threading.Thread(target=runBlast, args=(options, i))
         threads.append(t)
         t.start()
-    for i in xrange(options.args.nbThreads):
+    for i in range(options.args.nbThreads):
         threads[i].join()
     mergeBlastOutput(options)
     options.createCheckPoint('runBlast.done')
@@ -445,6 +448,7 @@ def parseBlast(options):
         if not qName in querries:
             querries[qName] = []
             n += 1
+
         hit = (hName, evalue, bitscore)
         querries[qName].append(hit)
     logging.info('Parsed %d blast records' % n)
@@ -474,7 +478,7 @@ def classifyFromBlast(options, querries):
     symbClassified = 0
     for qName in querries:
         hits = querries[qName]
-        hits.sort(sortHits)
+        hits.sort(key= lambda x: sortHits(x,x))
         hasCoral        = False
         hasZoox         = False
         coralBestEvalue = -1
@@ -507,19 +511,19 @@ def classifyFromBlast(options, querries):
             if coralBestScore > zooxBestScore:
                 scoreRatio = float(coralBestScore) / float(zooxBestScore)
                 scoreDelta = coralBestScore - zooxBestScore
-                if scoreRatio > CLASSIFICATION_MIN_BIT_RATIO and scoreDelta > CLASSIFICATION_MIN_BIT_DELTA:   
+                if scoreRatio > CLASSIFICATION_MIN_BIT_RATIO and scoreDelta > CLASSIFICATION_MIN_BIT_DELTA:
                     blastClassification[qName] = HOST_CODE
                     hostClassified            += 1
-                if scoreRatio > TRAINING_MIN_BIT_RATIO and scoreDelta > TRAINING_MIN_BIT_DELTA:   
+                if scoreRatio > TRAINING_MIN_BIT_RATIO and scoreDelta > TRAINING_MIN_BIT_DELTA:
                     trainingClassification[qName] = HOST_CODE
                     hostTrained                  += 1
             elif coralBestScore < zooxBestScore:
                 scoreRatio = float(zooxBestScore) / float(coralBestScore)
                 scoreDelta = zooxBestScore - coralBestScore
-                if scoreRatio > CLASSIFICATION_MIN_BIT_RATIO and scoreDelta > CLASSIFICATION_MIN_BIT_DELTA:   
+                if scoreRatio > CLASSIFICATION_MIN_BIT_RATIO and scoreDelta > CLASSIFICATION_MIN_BIT_DELTA:
                     blastClassification[qName] = SYMB_CODE
                     symbClassified            += 1
-                if scoreRatio > TRAINING_MIN_BIT_RATIO and scoreDelta > TRAINING_MIN_BIT_DELTA:   
+                if scoreRatio > TRAINING_MIN_BIT_RATIO and scoreDelta > TRAINING_MIN_BIT_DELTA:
                     trainingClassification[qName] = SYMB_CODE
                     symbTrained                  += 1
     logging.info('Found %d unambiguous hits' % len(trainingClassification))
@@ -566,10 +570,10 @@ def seqSplit(options, trainingClassification):
         if nSeqs < 2 * options.args.numberOfSeq:
             trainingMaxIdx = int(nSeqs * TRAINING_PROPORTION)
         # Training file
-        for i in xrange(trainingMaxIdx):
+        for i in range(trainingMaxIdx):
             outHandles[classification][0].write('>%s\n%s\n' % seqs[i])
         # Testing file
-        for i in xrange(trainingMaxIdx, 2 * options.args.numberOfSeq):
+        for i in range(trainingMaxIdx, 2 * options.args.numberOfSeq):
             outHandles[classification][1].write('>%s\n%s\n' % seqs[i])
 
     for classification in (HOST_CODE, SYMB_CODE):
@@ -621,7 +625,7 @@ def computeKmers(options, path, outfile, code, mode):
     kMax    = options.args.maxWordSize
     maps    = []
     logging.info('Preparing kmer maps')
-    for i in xrange(kMin, kMax + 1):
+    for i in range(kMin, kMax + 1):
         maps.append(prepareMaps(0, i, ['']))
     # Initialise output
     out     = outfile
@@ -629,8 +633,8 @@ def computeKmers(options, path, outfile, code, mode):
     handle  = open(outPath, mode)
     # Initialise counts
     counts  = {}
-    for i in xrange(kMin, kMax + 1):
-        counts[i] = array.array('d', [0 for x in xrange(4 ** i)])
+    for i in range(kMin, kMax + 1):
+        counts[i] = array.array('d', [0 for x in range(4 ** i)])
     # Iterate over sequences
     nSeqs   = 0
     for name, seq in iterFasta(path):
@@ -641,12 +645,12 @@ def computeKmers(options, path, outfile, code, mode):
         if options.args.bothStrands:
             seqs = (seq, revComp(seq))
         # For each kmer value
-        for i in xrange(kMin, kMax + 1):
+        for i in range(kMin, kMax + 1):
             kCounts  = counts[i]
             # For each strand
             for seq in seqs:
                 # For each word in the sequence
-                for j in xrange(size - i + 1):
+                for j in range(size - i + 1):
                     word = seq[j:j + i]
                     kMap = maps[i - kMin]
                     idx  = kMap.get(word, None)
@@ -655,7 +659,7 @@ def computeKmers(options, path, outfile, code, mode):
                         continue
                     kCounts[idx] += 1
             kCountsSum = sum(kCounts)
-            for j in xrange(len(kCounts)):
+            for j in range(len(kCounts)):
                 kCounts[j] /= kCountsSum
             for j in kCounts:
                 n += 1
@@ -664,8 +668,8 @@ def computeKmers(options, path, outfile, code, mode):
         handle.write('\n')
         nSeqs += 1
         # Reset counts
-        for i in xrange(kMin, kMax + 1):
-            for j in xrange(len(counts[i])):
+        for i in range(kMin, kMax + 1):
+            for j in range(len(counts[i])):
                 counts[i][j] = 0
     # Trace
     logging.info('Processed %d sequences' % nSeqs)
@@ -793,14 +797,14 @@ def calculateSVMGridJobs():
         if i / nC < j / nG:
             # increase C resolution
             line = []
-            for k in xrange(0, j):
+            for k in range(0, j):
                 line.append((cSeq[i], gSeq[k]))
             i = i + 1
             jobs.append(line)
         else:
             # increase g resolution
             line = []
-            for k in xrange(0, i):
+            for k in range(0, i):
                 line.append((cSeq[k], gSeq[j]))
             j = j + 1
             jobs.append(line)
@@ -860,7 +864,7 @@ class SVMGridWorker(threading.Thread):
         proc     = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
         result   = proc.stdout.readlines()
         for line in result:
-            if line.find("Cross") != -1:
+            if line.find(bytes("Cross",'utf8')) != -1:
                 return float(line.split()[-1][:-1])
 
 def doSVMGrid(options, dataPath):
@@ -876,7 +880,7 @@ def doSVMGrid(options, dataPath):
             jobQueue.put((c, g))
     jobQueue._put = jobQueue.queue.appendleft
 
-    for i in xrange(options.args.nbThreads):
+    for i in range(options.args.nbThreads):
         worker = SVMGridWorker('Worker%03d' % i, jobQueue, resultQueue, dataPath)
         worker.start()
 
@@ -949,7 +953,7 @@ def writeOutput(options, predictions, blastClassification, fastaPath, fastaName,
             os.makedirs(outFolder)
         hostHandle  = open(os.path.join(outFolder, hostResults), "w")
         symbHandle  = open(os.path.join(outFolder, symbResults), "w")
-    else:    
+    else:
         hostHandle  = open(hostResults, "w")
         symbHandle  = open(symbResults, "w")
 
@@ -963,7 +967,7 @@ def writeOutput(options, predictions, blastClassification, fastaPath, fastaName,
         blastCode = blastClassification.get(name, UNKNOWN_CODE)
         if predictions[seqIdx] == blastCode or blastCode == UNKNOWN_CODE:
             if predictions[seqIdx] == HOST_CODE_STR:
-                hostHandle.write('>%s\n%s\n' % (name, seq)) 
+                hostHandle.write('>%s\n%s\n' % (name, seq))
             elif predictions[seqIdx] == SYMB_CODE_STR:
                 symbHandle.write('>%s\n%s\n' % (name, seq))
         # Keep blast classification if it disagrees with SVM
@@ -1084,7 +1088,7 @@ def mainArgs():
                         '--minSeqSize',
                         type=int,
                         default='0',
-                        help='Minimum sequence size for training and testing')    
+                        help='Minimum sequence size for training and testing')
     parser.add_argument('-c',
                         '--minWordSize',
                         type=int,
