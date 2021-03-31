@@ -52,9 +52,9 @@ singularity run https://depot.galaxyproject.org/singularity/psytrans:2.0.0--0
 ```
        -h, --help
               Print a usage message briefly summarizing the command-line options.
-
-   **Global options**
-
+```
+**Global options**
+```
        -R, --restart
               Restart the script from the last checkpoint.
 
